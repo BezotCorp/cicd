@@ -1,5 +1,4 @@
-use crate::init_action::InitAction;
-use crate::init_step::InitStep;
+use crate::init::{InitAction, InitStep};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct InitPlan {

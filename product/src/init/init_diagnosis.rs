@@ -1,16 +1,12 @@
-use crate::ci_config_file::CiConfigFile;
-use crate::ci_provider::CiProvider;
+use crate::ci::{CiConfigFile, CiProvider};
 use crate::diagnostic::Diagnostic;
-use crate::git_branches::GitBranches;
-use crate::git_info::GitInfo;
-use crate::git_remote::Remote;
-use crate::git_status::GitStatus;
+use crate::git::{GitBranches, GitInfo, GitRemote, GitStatus};
 
 #[derive(Debug)]
 pub(crate) struct InitDiagnosis {
     info: GitInfo,
     status: GitStatus,
-    remotes: Vec<Remote>,
+    remotes: Vec<GitRemote>,
     branches: GitBranches,
     ci_files: Vec<CiConfigFile>,
     target_provider: Option<CiProvider>,
@@ -23,7 +19,7 @@ impl InitDiagnosis {
     pub(crate) fn new(
         info: GitInfo,
         status: GitStatus,
-        remotes: Vec<Remote>,
+        remotes: Vec<GitRemote>,
         branches: GitBranches,
         ci_files: Vec<CiConfigFile>,
         target_provider: Option<CiProvider>,
@@ -50,7 +46,7 @@ impl InitDiagnosis {
         &self.status
     }
 
-    pub(crate) fn remotes(&self) -> &[Remote] {
+    pub(crate) fn remotes(&self) -> &[GitRemote] {
         &self.remotes
     }
 

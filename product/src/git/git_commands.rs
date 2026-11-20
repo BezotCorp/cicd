@@ -1,17 +1,13 @@
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-use crate::git_branches::GitBranches;
-use crate::git_error::GitError;
-use crate::git_info::GitInfo;
-use crate::git_remote::Remote;
-use crate::git_status::GitStatus;
+use crate::git::{GitBranches, GitError, GitInfo, GitRemote, GitStatus};
 
-pub(crate) struct Git {
+pub(crate) struct GitCommands {
     path: PathBuf,
 }
 
-impl Git {
+impl GitCommands {
     pub(crate) fn new(path: &Path) -> Self {
         Self {
             path: path.to_path_buf(),
@@ -172,11 +168,16 @@ impl Git {
                 continue;
             }
 
-            if matches!((x, y),
-                (b'D', b'D') | (b'A', b'U') | (b'U', b'D') |
-                (b'U', b'A') | (b'D', b'U') | (b'A', b'A') |
-                (b'U', b'U'))
-            {
+            if matches!(
+                (x, y),
+                (b'D', b'D')
+                    | (b'A', b'U')
+                    | (b'U', b'D')
+                    | (b'U', b'A')
+                    | (b'D', b'U')
+                    | (b'A', b'A')
+                    | (b'U', b'U')
+            ) {
                 conflicted.push(path.clone());
             }
 
@@ -207,10 +208,12 @@ impl Git {
             }
         }
 
-        Ok(GitStatus::new(staged, unstaged, untracked, deleted, conflicted))
+        Ok(GitStatus::new(
+            staged, unstaged, untracked, deleted, conflicted,
+        ))
     }
 
-    pub(crate) fn remotes(&self) -> Result<Vec<Remote>, GitError> {
+    pub(crate) fn remotes(&self) -> Result<Vec<GitRemote>, GitError> {
         let output = self.required(&["remote", "-v"])?;
         // name -> (all fetch URLs, all push URLs), preserving order.
         let mut entries: Vec<(String, Vec<String>, Vec<String>)> = Vec::new();
@@ -238,7 +241,7 @@ impl Git {
 
         Ok(entries
             .into_iter()
-            .map(|(name, fetch, push)| Remote::new(name, fetch, push))
+            .map(|(name, fetch, push)| GitRemote::new(name, fetch, push))
             .collect())
     }
 

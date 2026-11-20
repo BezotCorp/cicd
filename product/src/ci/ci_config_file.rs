@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::ci_provider::CiProvider;
+use crate::ci::CiProvider;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct CiConfigFile {

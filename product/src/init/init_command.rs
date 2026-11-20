@@ -1,10 +1,7 @@
 use std::path::Path;
 
 use crate::diagnostic_severity::DiagnosticSeverity;
-use crate::init_action::InitAction;
-use crate::init_analyzer::InitAnalyzer;
-use crate::init_error::InitError;
-use crate::init_planner::InitPlanner;
+use crate::init::{InitAction, InitAnalyzer, InitError, InitPlanner};
 
 pub(crate) struct InitCommand;
 

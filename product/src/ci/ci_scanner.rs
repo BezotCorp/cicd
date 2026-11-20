@@ -2,9 +2,8 @@ use std::fs;
 use std::io;
 use std::path::Path;
 
-use crate::ci_config_file::CiConfigFile;
-use crate::ci_provider::CiProvider;
-use crate::init_error::InitError;
+use crate::ci::{CiConfigFile, CiProvider};
+use crate::init::InitError;
 
 const WORKFLOWS_DIR: &str = ".github/workflows";
 

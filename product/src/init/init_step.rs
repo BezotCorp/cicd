@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::init_action::InitAction;
+use crate::init::InitAction;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct InitStep {

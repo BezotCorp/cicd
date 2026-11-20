@@ -1,21 +1,18 @@
 use std::path::Path;
 
-use crate::ci_provider::CiProvider;
-use crate::ci_scanner::CiScanner;
+use crate::ci::{CiProvider, CiScanner};
 use crate::diagnostic::Diagnostic;
 use crate::diagnostic_severity::DiagnosticSeverity;
-use crate::git::Git;
-use crate::git_remote::Remote;
-use crate::init_diagnosis::InitDiagnosis;
-use crate::init_error::InitError;
-use crate::init_planner::CONFIG_PATH;
+use crate::git::{GitCommands, GitRemote};
+use crate::init::{InitDiagnosis, InitError};
+use crate::paths::CONFIG_PATH;
 
 pub(crate) struct InitAnalyzer;
 
 impl InitAnalyzer {
     /// Read-only analysis of the repository containing `path`.
     pub(crate) fn analyze(path: &Path) -> Result<InitDiagnosis, InitError> {
-        let git = Git::new(path);
+        let git = GitCommands::new(path);
         let info = git.inspect()?;
         let status = git.status()?;
         let remotes = git.remotes()?;
@@ -77,8 +74,8 @@ impl InitAnalyzer {
     }
 
     /// Prefers `origin`, then falls back to the first remote that matches a provider.
-    fn target_provider(remotes: &[Remote]) -> Option<CiProvider> {
-        let from_remote = |remote: &Remote| {
+    fn target_provider(remotes: &[GitRemote]) -> Option<CiProvider> {
+        let from_remote = |remote: &GitRemote| {
             remote
                 .fetch_urls()
                 .iter()

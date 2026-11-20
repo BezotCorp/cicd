@@ -2,7 +2,7 @@ use std::fmt;
 use std::io;
 use std::path::PathBuf;
 
-use crate::git_error::GitError;
+use crate::git::GitError;
 
 #[derive(Debug)]
 pub(crate) enum InitError {

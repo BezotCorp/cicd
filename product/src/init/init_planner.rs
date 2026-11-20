@@ -1,11 +1,7 @@
 use std::path::PathBuf;
 
-use crate::init_action::InitAction;
-use crate::init_diagnosis::InitDiagnosis;
-use crate::init_plan::InitPlan;
-use crate::init_step::InitStep;
-
-pub(crate) const CONFIG_PATH: &str = ".cicd/cicd.ron";
+use crate::init::{InitAction, InitDiagnosis, InitPlan, InitStep};
+use crate::paths::CONFIG_PATH;
 
 pub(crate) struct InitPlanner;
 
@@ -38,7 +34,10 @@ impl InitPlanner {
         }
 
         if let Some(provider) = diagnosis.target_provider()
-            && !diagnosis.ci_files().iter().any(|file| file.provider() == provider)
+            && !diagnosis
+                .ci_files()
+                .iter()
+                .any(|file| file.provider() == provider)
         {
             steps.push(InitStep::new(
                 InitAction::Create,

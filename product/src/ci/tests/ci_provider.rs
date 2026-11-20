@@ -16,7 +16,16 @@ fn infers_provider_from_remote_url() {
 
 #[test]
 fn refuses_misleading_hostnames() {
-    assert_eq!(CiProvider::from_remote_url("https://github.com.evil.test/a/b"), None);
-    assert_eq!(CiProvider::from_remote_url("https://evil.test/github.com/a"), None);
-    assert_eq!(CiProvider::from_remote_url("git@github.com:a/b.git"), Some(CiProvider::GitHubActions));
+    assert_eq!(
+        CiProvider::from_remote_url("https://github.com.evil.test/a/b"),
+        None
+    );
+    assert_eq!(
+        CiProvider::from_remote_url("https://evil.test/github.com/a"),
+        None
+    );
+    assert_eq!(
+        CiProvider::from_remote_url("git@github.com:a/b.git"),
+        Some(CiProvider::GitHubActions)
+    );
 }
