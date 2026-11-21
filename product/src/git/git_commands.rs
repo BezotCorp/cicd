@@ -26,13 +26,21 @@ impl GitCommands {
             return Self::text(output).map(|root| Some(PathBuf::from(root)));
         }
 
-        if self.path.join(".git").exists() {
-            return Err(GitError::CommandFailed(
-                "Existing Git metadata cannot be inspected".to_owned(),
-            ));
+        // Only an explicit "not a repository" failure means
+        // that initialization may be proposed.
+        let stderr = String::from_utf8_lossy(&output.stderr);
+
+        if output.status.code() == Some(128)
+            && stderr.contains("not a git repository")
+            && !self.path.join(".git").exists()
+        {
+            return Ok(None);
         }
 
-        Ok(None)
+        Err(GitError::CommandFailed(format!(
+            "Cannot inspect Git repository: {}",
+            stderr.trim()
+        )))
     }
 
     pub(crate) fn initialize_main(&self) -> Result<(), GitError> {
@@ -47,6 +55,7 @@ impl GitCommands {
 
     fn execute(&self, args: &[&str]) -> Result<Output, GitError> {
         Command::new("git")
+            .env("LC_ALL", "C")
             .arg("-C")
             .arg(&self.path)
             .args(args)

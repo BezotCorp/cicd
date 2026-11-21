@@ -307,3 +307,24 @@ fn ignores_broken_symlink() -> TestResult {
     assert!(found.is_empty());
     Ok(())
 }
+
+#[test]
+fn discovers_gitea_workflows() -> TestResult {
+    let directory = tempdir()?;
+    let workflows = directory.path().join(".gitea/workflows");
+
+    fs::create_dir_all(&workflows)?;
+    fs::write(workflows.join("ci.yml"), "")?;
+    fs::write(workflows.join("release.yaml"), "")?;
+
+    let found = CiScanner::scan(directory.path())?;
+
+    assert_eq!(found.len(), 2);
+    assert!(
+        found
+            .iter()
+            .all(|file| { file.provider() == CiProvider::GiteaActions })
+    );
+
+    Ok(())
+}

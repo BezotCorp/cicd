@@ -152,7 +152,7 @@ fn existing_feature_branch_is_not_switched() -> TestResult {
 }
 
 #[test]
-fn creates_main_and_dev_from_existing_branch() -> TestResult {
+fn defers_main_when_base_is_ambiguous() -> TestResult {
     let directory = tempdir()?;
     let root = directory.path();
 
@@ -168,8 +168,12 @@ fn creates_main_and_dev_from_existing_branch() -> TestResult {
     let branches = git.branches()?;
 
     assert_eq!(info.branch(), Some("legacy"));
-    assert!(branches.local().iter().any(|name| name == "main"));
-    assert!(branches.local().iter().any(|name| name == "dev"));
+    assert!(!branches.local().iter().any(|name| name == "main"));
+    assert!(!branches.local().iter().any(|name| name == "dev"));
+
+    assert!(plan.steps().iter().any(|step| {
+        step.action() == InitAction::Deferred && step.path() == Path::new("refs/heads/main")
+    }));
 
     Ok(())
 }
@@ -356,6 +360,65 @@ fn pro_profile_creates_missing_dev_from_main() -> TestResult {
     assert!(branches.local().iter().any(|name| name == "main"));
     assert!(branches.local().iter().any(|name| name == "dev"));
     assert_eq!(git.inspect()?.head(), main_head.head());
+
+    Ok(())
+}
+
+#[test]
+fn bare_repository_is_not_treated_as_missing() -> TestResult {
+    let directory = tempdir()?;
+    let root = directory.path();
+
+    run_git(root, &["init", "--bare"])?;
+
+    let git = GitCommands::new(root);
+
+    assert!(git.repository_root().is_err());
+    assert!(InitGit::plan(root, None).is_err());
+
+    Ok(())
+}
+
+#[test]
+fn malformed_git_metadata_is_not_treated_as_missing() -> TestResult {
+    let directory = tempdir()?;
+    let root = directory.path();
+
+    fs::write(root.join(".git"), "invalid git metadata")?;
+
+    let git = GitCommands::new(root);
+
+    assert!(git.repository_root().is_err());
+    assert!(InitGit::plan(root, None).is_err());
+
+    Ok(())
+}
+
+#[test]
+fn main_can_be_created_later_from_an_explicit_reference() -> TestResult {
+    let directory = tempdir()?;
+    let root = directory.path();
+
+    run_git(root, &["init", "-b", "legacy"])?;
+    commit_empty(root)?;
+
+    let git = GitCommands::new(root);
+
+    let first = InitGit::plan(root, Some(GitWorkflow::Pro))?;
+    assert!(!first.has_changes());
+
+    // A separate, explicit decision establishes main's base.
+    git.create_branch("main", "legacy")?;
+
+    let second = InitGit::plan(root, Some(GitWorkflow::Pro))?;
+    assert!(second.has_changes());
+
+    InitGit::apply(root, &second, Some(GitWorkflow::Pro))?;
+
+    let branches = git.branches()?;
+
+    assert!(branches.local().iter().any(|name| name == "main"));
+    assert!(branches.local().iter().any(|name| name == "dev"));
 
     Ok(())
 }

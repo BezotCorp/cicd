@@ -93,9 +93,11 @@ impl InitCommand {
         for file in diagnosis.ci_files() {
             println!("  {} [{}]", file.path().display(), file.provider());
         }
-        match diagnosis.target_provider() {
-            Some(provider) => println!("Inferred provider: {provider}"),
-            None => println!("Inferred provider: (unknown)"),
+        println!("Git hosting: {:?}", diagnosis.hosting());
+
+        match diagnosis.suggested_provider() {
+            Some(provider) => println!("Suggested CI provider: {provider}"),
+            None => println!("Suggested CI provider: (unknown)"),
         }
 
         for finding in diagnosis.findings() {

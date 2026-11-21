@@ -1,10 +1,10 @@
 use std::path::Path;
 
 use crate::ci::{CiProvider, CiScanner};
-use crate::collect::{CollectError, ProjectSnapshot};
+use crate::collect::{CollectError, CollectSource, ProjectSnapshot};
 use crate::diagnostic::Diagnostic;
 use crate::diagnostic_severity::DiagnosticSeverity;
-use crate::git::{GitCommands, GitRemote};
+use crate::git::{GitCommands, GitHosting, GitRemote};
 use crate::paths::CONFIG_PATH;
 
 pub(crate) struct ProjectCollector;
@@ -19,7 +19,8 @@ impl ProjectCollector {
         let branches = git.branches()?;
         let ci_files = CiScanner::scan(info.root())?;
         let already_initialized = info.root().join(CONFIG_PATH).is_file();
-        let target_provider = Self::target_provider(&remotes);
+        let hosting = Self::hosting(&remotes);
+        let suggested_provider = hosting.map(CiProvider::from_host);
 
         let mut findings = Vec::new();
         let mut warn = |message: &str| {
@@ -37,8 +38,8 @@ impl ProjectCollector {
         }
         if remotes.is_empty() {
             warn("No remote configured: the CI provider cannot be inferred");
-        } else if target_provider.is_none() {
-            warn("No remote points to a supported CI hosting platform");
+        } else if hosting.is_none() {
+            warn("Git hosting platform could not be identified");
         }
         if !status.staged().is_empty() || !status.unstaged().is_empty() {
             warn("Working tree has uncommitted changes to tracked files");
@@ -67,20 +68,22 @@ impl ProjectCollector {
             remotes,
             branches,
             ci_files,
-            target_provider,
+            hosting,
+            suggested_provider,
+            vec![CollectSource::Git, CollectSource::Ci],
             already_initialized,
             findings,
         ))
     }
 
-    /// Prefers `origin`, then falls back to the first remote that matches a provider.
-    fn target_provider(remotes: &[GitRemote]) -> Option<CiProvider> {
+    /// Prefers origin, then the first recognizable hosting remote.
+    fn hosting(remotes: &[GitRemote]) -> Option<GitHosting> {
         let from_remote = |remote: &GitRemote| {
             remote
                 .fetch_urls()
                 .iter()
                 .chain(remote.push_urls())
-                .find_map(|url| CiProvider::from_remote_url(url))
+                .find_map(|url| GitHosting::from_remote_url(url))
         };
 
         remotes

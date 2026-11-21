@@ -50,57 +50,57 @@ impl InitGit {
             let has_main = branches.local().iter().any(|branch| branch == "main");
             let has_dev = branches.local().iter().any(|branch| branch == "dev");
 
-            if info.head().is_none() {
-                if info.branch() == Some("main") {
-                    steps.push(Self::step(
-                        InitAction::Preserve,
-                        "refs/heads/main",
-                        "main is the unborn current branch",
-                    ));
-                } else {
-                    steps.push(Self::step(
-                        InitAction::Deferred,
-                        "refs/heads/main",
-                        "main requires an initial commit",
-                    ));
-                }
-
+            if has_main {
                 steps.push(Self::step(
-                    InitAction::Deferred,
-                    "refs/heads/dev",
-                    "dev requires an initial commit",
+                    InitAction::Preserve,
+                    "refs/heads/main",
+                    "main already exists",
                 ));
 
-                return Ok(InitPlan::new(steps));
+                steps.push(Self::step(
+                    if has_dev {
+                        InitAction::Preserve
+                    } else {
+                        InitAction::CreateBranch
+                    },
+                    "refs/heads/dev",
+                    if has_dev {
+                        "dev already exists"
+                    } else {
+                        "create dev from existing main"
+                    },
+                ));
+            } else {
+                let unborn_main = info.head().is_none() && info.branch() == Some("main");
+
+                steps.push(Self::step(
+                    if unborn_main {
+                        InitAction::Preserve
+                    } else {
+                        InitAction::Deferred
+                    },
+                    "refs/heads/main",
+                    if unborn_main {
+                        "main is the unborn current branch"
+                    } else {
+                        "cannot determine a reliable base for main"
+                    },
+                ));
+
+                steps.push(Self::step(
+                    if has_dev {
+                        InitAction::Preserve
+                    } else {
+                        InitAction::Deferred
+                    },
+                    "refs/heads/dev",
+                    if has_dev {
+                        "dev already exists"
+                    } else {
+                        "dev requires a valid main reference"
+                    },
+                ));
             }
-
-            steps.push(Self::step(
-                if has_main {
-                    InitAction::Preserve
-                } else {
-                    InitAction::CreateBranch
-                },
-                "refs/heads/main",
-                if has_main {
-                    "main already exists"
-                } else {
-                    "create main from HEAD without switching branches"
-                },
-            ));
-
-            steps.push(Self::step(
-                if has_dev {
-                    InitAction::Preserve
-                } else {
-                    InitAction::CreateBranch
-                },
-                "refs/heads/dev",
-                if has_dev {
-                    "dev already exists"
-                } else {
-                    "create dev from main without switching branches"
-                },
-            ));
         } else {
             steps.push(Self::step(
                 InitAction::InitializeGit,

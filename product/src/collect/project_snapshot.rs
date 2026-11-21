@@ -1,6 +1,7 @@
 use crate::ci::{CiConfigFile, CiProvider};
+use crate::collect::CollectSource;
 use crate::diagnostic::Diagnostic;
-use crate::git::{GitBranches, GitInfo, GitRemote, GitStatus};
+use crate::git::{GitBranches, GitHosting, GitInfo, GitRemote, GitStatus};
 
 #[derive(Debug)]
 pub(crate) struct ProjectSnapshot {
@@ -9,7 +10,9 @@ pub(crate) struct ProjectSnapshot {
     remotes: Vec<GitRemote>,
     branches: GitBranches,
     ci_files: Vec<CiConfigFile>,
-    target_provider: Option<CiProvider>,
+    hosting: Option<GitHosting>,
+    suggested_provider: Option<CiProvider>,
+    sources: Vec<CollectSource>,
     already_initialized: bool,
     findings: Vec<Diagnostic>,
 }
@@ -22,7 +25,9 @@ impl ProjectSnapshot {
         remotes: Vec<GitRemote>,
         branches: GitBranches,
         ci_files: Vec<CiConfigFile>,
-        target_provider: Option<CiProvider>,
+        hosting: Option<GitHosting>,
+        suggested_provider: Option<CiProvider>,
+        sources: Vec<CollectSource>,
         already_initialized: bool,
         findings: Vec<Diagnostic>,
     ) -> Self {
@@ -32,7 +37,9 @@ impl ProjectSnapshot {
             remotes,
             branches,
             ci_files,
-            target_provider,
+            hosting,
+            suggested_provider,
+            sources,
             already_initialized,
             findings,
         }
@@ -58,9 +65,17 @@ impl ProjectSnapshot {
         &self.ci_files
     }
 
-    /// CI provider inferred from the remotes, if any.
-    pub(crate) fn target_provider(&self) -> Option<CiProvider> {
-        self.target_provider
+    pub(crate) fn hosting(&self) -> Option<GitHosting> {
+        self.hosting
+    }
+
+    /// Suggested CI, not a confirmed CI configuration.
+    pub(crate) fn suggested_provider(&self) -> Option<CiProvider> {
+        self.suggested_provider
+    }
+
+    pub(crate) fn sources(&self) -> &[CollectSource] {
+        &self.sources
     }
 
     /// Whether the cicd configuration file already exists.

@@ -5,7 +5,8 @@ use std::process::Command;
 use tempfile::tempdir;
 
 use crate::ci::CiProvider;
-use crate::collect::ProjectCollector;
+use crate::collect::{CollectSource, ProjectCollector};
+use crate::git::GitHosting;
 
 type TestResult = Result<(), Box<dyn Error>>;
 
@@ -40,7 +41,12 @@ fn collects_git_and_ci_from_existing_repository() -> TestResult {
     let snapshot = ProjectCollector::analyze(root)?;
 
     assert_eq!(snapshot.info().branch(), Some("main"));
-    assert_eq!(snapshot.target_provider(), Some(CiProvider::GitHubActions));
+    assert_eq!(snapshot.hosting(), Some(GitHosting::GitHub));
+    assert_eq!(
+        snapshot.suggested_provider(),
+        Some(CiProvider::GitHubActions)
+    );
+    assert_eq!(snapshot.sources(), &[CollectSource::Git, CollectSource::Ci]);
     assert_eq!(snapshot.ci_files().len(), 1);
     assert_eq!(snapshot.remotes().len(), 1);
 
@@ -63,7 +69,8 @@ fn collects_existing_repository_without_remote() -> TestResult {
 
     assert!(snapshot.remotes().is_empty());
     assert!(snapshot.ci_files().is_empty());
-    assert_eq!(snapshot.target_provider(), None);
+    assert_eq!(snapshot.hosting(), None);
+    assert_eq!(snapshot.suggested_provider(), None);
     assert!(!snapshot.findings().is_empty());
 
     Ok(())

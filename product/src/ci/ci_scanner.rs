@@ -5,7 +5,10 @@ use std::path::Path;
 use crate::ci::{CiConfigFile, CiProvider};
 use crate::collect::CollectError;
 
-const WORKFLOWS_DIR: &str = ".github/workflows";
+const WORKFLOW_DIRS: &[(&str, CiProvider)] = &[
+    (".github/workflows", CiProvider::GitHubActions),
+    (".gitea/workflows", CiProvider::GiteaActions),
+];
 
 const SINGLE_FILES: &[(&str, CiProvider)] = &[
     (".gitlab-ci.yml", CiProvider::GitLabCi),
@@ -24,33 +27,37 @@ impl CiScanner {
     pub(crate) fn scan(root: &Path) -> Result<Vec<CiConfigFile>, CollectError> {
         let mut found = Vec::new();
 
-        let workflows = root.join(WORKFLOWS_DIR);
-        match fs::read_dir(&workflows) {
-            Ok(entries) => {
-                for entry in entries {
-                    let entry = entry.map_err(|source| CollectError::Io {
-                        path: workflows.clone(),
-                        source,
-                    })?;
-                    let path = entry.path();
-                    let is_yaml = path
-                        .extension()
-                        .is_some_and(|ext| ext == "yml" || ext == "yaml");
+        for (directory, provider) in WORKFLOW_DIRS {
+            let workflows = root.join(directory);
 
-                    if is_yaml && path.is_file() {
-                        found.push(CiConfigFile::new(
-                            CiProvider::GitHubActions,
-                            Path::new(WORKFLOWS_DIR).join(entry.file_name()),
-                        ));
+            match fs::read_dir(&workflows) {
+                Ok(entries) => {
+                    for entry in entries {
+                        let entry = entry.map_err(|source| CollectError::Io {
+                            path: workflows.clone(),
+                            source,
+                        })?;
+
+                        let path = entry.path();
+                        let is_yaml = path
+                            .extension()
+                            .is_some_and(|ext| ext == "yml" || ext == "yaml");
+
+                        if is_yaml && path.is_file() {
+                            found.push(CiConfigFile::new(
+                                *provider,
+                                Path::new(directory).join(entry.file_name()),
+                            ));
+                        }
                     }
                 }
-            }
-            Err(error) if error.kind() == io::ErrorKind::NotFound => {}
-            Err(source) => {
-                return Err(CollectError::Io {
-                    path: workflows,
-                    source,
-                });
+                Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+                Err(source) => {
+                    return Err(CollectError::Io {
+                        path: workflows,
+                        source,
+                    });
+                }
             }
         }
 

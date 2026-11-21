@@ -34,7 +34,7 @@ impl InitPlanner {
             ));
         }
 
-        if let Some(provider) = diagnosis.target_provider()
+        if let Some(provider) = diagnosis.suggested_provider()
             && !diagnosis
                 .ci_files()
                 .iter()
@@ -43,7 +43,7 @@ impl InitPlanner {
             steps.push(InitStep::new(
                 InitAction::Create,
                 PathBuf::from(provider.default_config_path()),
-                format!("initial {provider} pipeline (inferred from remote)"),
+                format!("suggested {provider} pipeline (not yet configured)"),
             ));
         }
 
