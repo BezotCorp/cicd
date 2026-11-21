@@ -1,4 +1,4 @@
-use crate::ci_provider::CiProvider;
+use crate::ci::CiProvider;
 
 #[cfg(test)]
 #[test]
@@ -27,5 +27,29 @@ fn refuses_misleading_hostnames() {
     assert_eq!(
         CiProvider::from_remote_url("git@github.com:a/b.git"),
         Some(CiProvider::GitHubActions)
+    );
+}
+
+#[test]
+fn recognizes_gitlab_ci() {
+    assert_eq!(
+        CiProvider::from_remote_url("https://gitlab.com/a/b"),
+        Some(CiProvider::GitLabCi)
+    );
+}
+
+#[test]
+fn recognizes_github_actions() {
+    assert_eq!(
+        CiProvider::from_remote_url("git@github.com:a/b.git"),
+        Some(CiProvider::GitHubActions)
+    );
+}
+
+#[test]
+fn recognizes_gitlab_ci_with_custom_domain() {
+    assert_eq!(
+        CiProvider::from_remote_url("https://gitlab.example.org/a/b"),
+        Some(CiProvider::GitLabCi)
     );
 }

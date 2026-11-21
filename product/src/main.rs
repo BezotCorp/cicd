@@ -5,10 +5,6 @@ mod git;
 mod init;
 mod paths;
 
-#[cfg(test)]
-#[path = "tests/ci_provider.rs"]
-mod ci_provider_tests;
-
 use std::{env, path::Path, process};
 
 use crate::git::GitCommands;
