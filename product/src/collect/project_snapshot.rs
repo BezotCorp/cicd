@@ -1,7 +1,7 @@
 use crate::ci::{CiConfigFile, CiProvider};
-use crate::collect::CollectSource;
 use crate::diagnostic::Diagnostic;
 use crate::git::{GitBranches, GitHosting, GitInfo, GitRemote, GitStatus};
+use common::data_source_kind::DataSourceKind;
 
 #[derive(Debug)]
 pub(crate) struct ProjectSnapshot {
@@ -12,7 +12,7 @@ pub(crate) struct ProjectSnapshot {
     ci_files: Vec<CiConfigFile>,
     hosting: Option<GitHosting>,
     suggested_provider: Option<CiProvider>,
-    sources: Vec<CollectSource>,
+    sources: Vec<DataSourceKind>,
     already_initialized: bool,
     findings: Vec<Diagnostic>,
 }
@@ -27,7 +27,7 @@ impl ProjectSnapshot {
         ci_files: Vec<CiConfigFile>,
         hosting: Option<GitHosting>,
         suggested_provider: Option<CiProvider>,
-        sources: Vec<CollectSource>,
+        sources: Vec<DataSourceKind>,
         already_initialized: bool,
         findings: Vec<Diagnostic>,
     ) -> Self {
@@ -74,7 +74,7 @@ impl ProjectSnapshot {
         self.suggested_provider
     }
 
-    pub(crate) fn sources(&self) -> &[CollectSource] {
+    pub(crate) fn sources(&self) -> &[DataSourceKind] {
         &self.sources
     }
 

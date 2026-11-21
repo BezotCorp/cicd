@@ -1,0 +1,6 @@
+(
+    sources: [
+        (kind: Git, enabled: true),
+        (kind: Ci, enabled: true),
+    ],
+)

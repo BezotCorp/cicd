@@ -1,4 +1,5 @@
 mod git_branches;
+mod git_collection;
 mod git_commands;
 mod git_error;
 mod git_hosting;
@@ -11,6 +12,7 @@ mod git_workflow;
 mod tests;
 
 pub(crate) use git_branches::GitBranches;
+pub(crate) use git_collection::GitCollection;
 pub(crate) use git_commands::GitCommands;
 pub(crate) use git_error::GitError;
 pub(crate) use git_hosting::GitHosting;

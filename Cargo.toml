@@ -1,4 +1,8 @@
 [workspace]
 resolver = "3"
-members = ["product"]
+members = [
+    "product",
+    "libraries/common",
+    "tools/generate-data-sources",
+]
 default-members = ["product"]
