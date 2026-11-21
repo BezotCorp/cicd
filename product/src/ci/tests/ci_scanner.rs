@@ -5,7 +5,7 @@ use std::path::Path;
 use tempfile::tempdir;
 
 use crate::ci::{CiProvider, CiScanner};
-use crate::init::InitError;
+use crate::collect::CollectError;
 
 type TestResult = Result<(), Box<dyn Error>>;
 
@@ -223,7 +223,7 @@ fn workflow_path_is_a_file_instead_of_directory() -> TestResult {
     let result = CiScanner::scan(directory.path());
 
     match result {
-        Err(InitError::Io { path, .. }) => {
+        Err(CollectError::Io { path, .. }) => {
             assert_eq!(path, github.join("workflows"));
         }
         other => {

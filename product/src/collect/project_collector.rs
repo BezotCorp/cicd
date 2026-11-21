@@ -1,17 +1,17 @@
 use std::path::Path;
 
 use crate::ci::{CiProvider, CiScanner};
+use crate::collect::{CollectError, ProjectSnapshot};
 use crate::diagnostic::Diagnostic;
 use crate::diagnostic_severity::DiagnosticSeverity;
 use crate::git::{GitCommands, GitRemote};
-use crate::init::{InitDiagnosis, InitError};
 use crate::paths::CONFIG_PATH;
 
-pub(crate) struct InitAnalyzer;
+pub(crate) struct ProjectCollector;
 
-impl InitAnalyzer {
+impl ProjectCollector {
     /// Read-only analysis of the repository containing `path`.
-    pub(crate) fn analyze(path: &Path) -> Result<InitDiagnosis, InitError> {
+    pub(crate) fn analyze(path: &Path) -> Result<ProjectSnapshot, CollectError> {
         let git = GitCommands::new(path);
         let info = git.inspect()?;
         let status = git.status()?;
@@ -61,7 +61,7 @@ impl InitAnalyzer {
                 .map(|message| Diagnostic::new(DiagnosticSeverity::Info, message)),
         );
 
-        Ok(InitDiagnosis::new(
+        Ok(ProjectSnapshot::new(
             info,
             status,
             remotes,

@@ -3,7 +3,7 @@ use crate::diagnostic::Diagnostic;
 use crate::git::{GitBranches, GitInfo, GitRemote, GitStatus};
 
 #[derive(Debug)]
-pub(crate) struct InitDiagnosis {
+pub(crate) struct ProjectSnapshot {
     info: GitInfo,
     status: GitStatus,
     remotes: Vec<GitRemote>,
@@ -14,7 +14,7 @@ pub(crate) struct InitDiagnosis {
     findings: Vec<Diagnostic>,
 }
 
-impl InitDiagnosis {
+impl ProjectSnapshot {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
         info: GitInfo,

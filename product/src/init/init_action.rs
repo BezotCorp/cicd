@@ -2,4 +2,7 @@
 pub(crate) enum InitAction {
     Create,
     Preserve,
+    InitializeGit,
+    CreateBranch,
+    Deferred,
 }

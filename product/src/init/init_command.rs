@@ -1,14 +1,49 @@
 use std::path::Path;
 
+use crate::collect::ProjectCollector;
 use crate::diagnostic_severity::DiagnosticSeverity;
-use crate::init::{InitAction, InitAnalyzer, InitError, InitPlanner};
+use crate::git::GitWorkflow;
+use crate::init::{InitAction, InitError, InitGit, InitPlanner};
 
 pub(crate) struct InitCommand;
 
 impl InitCommand {
-    /// Prints the diagnosis and the initialization plan. Dry run only.
-    pub(crate) fn run(path: &Path) -> Result<(), InitError> {
-        let diagnosis = InitAnalyzer::analyze(path)?;
+    /// Inspects the project and optionally applies safe Git initialization.
+    pub(crate) fn run(
+        path: &Path,
+        apply: bool,
+        profile: Option<GitWorkflow>,
+    ) -> Result<(), InitError> {
+        let git_plan = InitGit::plan(path, profile)?;
+
+        println!("=== Git initialization plan ===");
+
+        for step in git_plan.steps() {
+            let action = match step.action() {
+                InitAction::InitializeGit => "git-init",
+                InitAction::CreateBranch => "branch",
+                InitAction::Preserve => "preserve",
+                InitAction::Deferred => "deferred",
+                InitAction::Create => "create",
+            };
+
+            println!("{action:9} {} — {}", step.path().display(), step.reason());
+        }
+
+        if apply {
+            InitGit::apply(path, &git_plan, profile)?;
+            println!("Git initialization applied.");
+        } else if git_plan
+            .steps()
+            .iter()
+            .any(|step| step.action() == InitAction::InitializeGit)
+        {
+            println!("Git is absent. Use --apply to initialize it.");
+            println!("No files or branches were changed.");
+            return Ok(());
+        }
+
+        let diagnosis = ProjectCollector::analyze(path)?;
         let plan = InitPlanner::plan(&diagnosis);
         let info = diagnosis.info();
 
@@ -72,16 +107,21 @@ impl InitCommand {
         }
 
         println!();
-        println!("=== Init plan (dry run, nothing written) ===");
+        println!("=== CI/CD file plan (not applied) ===");
         for step in plan.steps() {
             let label = match step.action() {
                 InitAction::Create => "create  ",
                 InitAction::Preserve => "preserve",
+                InitAction::InitializeGit => "git-init",
+                InitAction::CreateBranch => "branch",
+                InitAction::Deferred => "deferred",
             };
             println!("{label} {} — {}", step.path().display(), step.reason());
         }
         if !plan.has_changes() {
             println!("Nothing to do.");
+        } else {
+            println!("CI/CD configuration generation is not implemented yet.");
         }
 
         Ok(())

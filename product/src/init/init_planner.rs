@@ -1,13 +1,14 @@
 use std::path::PathBuf;
 
-use crate::init::{InitAction, InitDiagnosis, InitPlan, InitStep};
+use crate::collect::ProjectSnapshot;
+use crate::init::{InitAction, InitPlan, InitStep};
 use crate::paths::CONFIG_PATH;
 
 pub(crate) struct InitPlanner;
 
 impl InitPlanner {
     /// Derives what initialization would do; nothing is written.
-    pub(crate) fn plan(diagnosis: &InitDiagnosis) -> InitPlan {
+    pub(crate) fn plan(diagnosis: &ProjectSnapshot) -> InitPlan {
         let mut steps = Vec::new();
 
         let config = PathBuf::from(CONFIG_PATH);

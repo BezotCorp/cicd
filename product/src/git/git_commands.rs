@@ -18,6 +18,33 @@ impl GitCommands {
         &self.path
     }
 
+    /// Returns the containing repository root, if any.
+    pub(crate) fn repository_root(&self) -> Result<Option<PathBuf>, GitError> {
+        let output = self.execute(&["rev-parse", "--show-toplevel"])?;
+
+        if output.status.success() {
+            return Self::text(output).map(|root| Some(PathBuf::from(root)));
+        }
+
+        if self.path.join(".git").exists() {
+            return Err(GitError::CommandFailed(
+                "Existing Git metadata cannot be inspected".to_owned(),
+            ));
+        }
+
+        Ok(None)
+    }
+
+    pub(crate) fn initialize_main(&self) -> Result<(), GitError> {
+        self.required(&["init", "-b", "main"])?;
+        Ok(())
+    }
+
+    pub(crate) fn create_branch(&self, name: &str, start_point: &str) -> Result<(), GitError> {
+        self.required(&["branch", name, start_point])?;
+        Ok(())
+    }
+
     fn execute(&self, args: &[&str]) -> Result<Output, GitError> {
         Command::new("git")
             .arg("-C")

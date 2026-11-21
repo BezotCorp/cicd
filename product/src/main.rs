@@ -1,4 +1,5 @@
 mod ci;
+mod collect;
 mod diagnostic;
 mod diagnostic_severity;
 mod git;
@@ -49,16 +50,61 @@ fn main() {
                 }
             }
         }
-        ["init"] | ["init", _] => {
-            let path = args.get(1).map_or(Path::new("."), |value| Path::new(value));
+        ["init", options @ ..] => {
+            use crate::git::GitWorkflow;
 
-            if let Err(error) = InitCommand::run(path) {
+            let mut path = Path::new(".");
+            let mut has_path = false;
+            let mut apply = false;
+            let mut profile = None;
+            let mut index = 0;
+
+            while index < options.len() {
+                match options[index] {
+                    "--apply" => {
+                        if apply {
+                            eprintln!("Duplicate --apply option");
+                            process::exit(2);
+                        }
+                        apply = true;
+                    }
+                    "--profile" => {
+                        if profile.is_some() {
+                            eprintln!("Duplicate --profile option");
+                            process::exit(2);
+                        }
+
+                        index += 1;
+
+                        profile = match options.get(index).copied() {
+                            Some("simple") => Some(GitWorkflow::Simple),
+                            Some("pro") => Some(GitWorkflow::Pro),
+                            _ => {
+                                eprintln!("Expected --profile simple|pro");
+                                process::exit(2);
+                            }
+                        };
+                    }
+                    value if !value.starts_with('-') && !has_path => {
+                        path = Path::new(value);
+                        has_path = true;
+                    }
+                    _ => {
+                        eprintln!("Invalid init argument: {}", options[index]);
+                        process::exit(2);
+                    }
+                }
+
+                index += 1;
+            }
+
+            if let Err(error) = InitCommand::run(path, apply, profile) {
                 eprintln!("Init failed: {error}");
                 process::exit(1);
             }
         }
         _ => {
-            eprintln!("Usage: cicd inspect | cicd init [path]");
+            eprintln!("Usage: cicd inspect | cicd init [path] [--apply] [--profile simple|pro]");
             process::exit(2);
         }
     }

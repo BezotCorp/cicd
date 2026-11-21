@@ -16,8 +16,11 @@ impl InitPlan {
 
     /// True when applying the plan would modify the repository.
     pub(crate) fn has_changes(&self) -> bool {
-        self.steps
-            .iter()
-            .any(|step| step.action() == InitAction::Create)
+        self.steps.iter().any(|step| {
+            matches!(
+                step.action(),
+                InitAction::Create | InitAction::InitializeGit | InitAction::CreateBranch
+            )
+        })
     }
 }

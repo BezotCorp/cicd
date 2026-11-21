@@ -3,7 +3,7 @@ use std::io;
 use std::path::Path;
 
 use crate::ci::{CiConfigFile, CiProvider};
-use crate::init::InitError;
+use crate::collect::CollectError;
 
 const WORKFLOWS_DIR: &str = ".github/workflows";
 
@@ -21,14 +21,14 @@ pub(crate) struct CiScanner;
 
 impl CiScanner {
     /// Lists existing CI/CD configuration files below `root`, sorted by path.
-    pub(crate) fn scan(root: &Path) -> Result<Vec<CiConfigFile>, InitError> {
+    pub(crate) fn scan(root: &Path) -> Result<Vec<CiConfigFile>, CollectError> {
         let mut found = Vec::new();
 
         let workflows = root.join(WORKFLOWS_DIR);
         match fs::read_dir(&workflows) {
             Ok(entries) => {
                 for entry in entries {
-                    let entry = entry.map_err(|source| InitError::Io {
+                    let entry = entry.map_err(|source| CollectError::Io {
                         path: workflows.clone(),
                         source,
                     })?;
@@ -47,7 +47,7 @@ impl CiScanner {
             }
             Err(error) if error.kind() == io::ErrorKind::NotFound => {}
             Err(source) => {
-                return Err(InitError::Io {
+                return Err(CollectError::Io {
                     path: workflows,
                     source,
                 });
